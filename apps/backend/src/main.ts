@@ -4,29 +4,38 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    console.log('BOOTSTRAP STARTED');
 
-  app.use(helmet());
+    const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-  });
+    console.log('APP CREATED');
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
+    app.use(helmet());
 
-  app.setGlobalPrefix('api/v1');
+    app.enableCors({
+      origin: process.env.FRONTEND_URL || '*',
+      credentials: true,
+    });
 
-  const port = Number(process.env.PORT) || 4000;
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+      }),
+    );
 
-  await app.listen(port, '0.0.0.0');
+    app.setGlobalPrefix('api/v1');
 
-  console.log(`🚀 Neja API running on port ${port}`);
+    const port = Number(process.env.PORT) || 4000;
+
+    await app.listen(port, '0.0.0.0');
+
+    console.log(`APP RUNNING ON PORT ${port}`);
+  } catch (err) {
+    console.error('BOOTSTRAP ERROR');
+    console.error(err);
+  }
 }
 
 bootstrap();
