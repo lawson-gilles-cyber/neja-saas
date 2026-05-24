@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neja-backend
+  labels:
+    app: neja-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: neja-backend
+  template:
+    metadata:
+      labels:
+        app: neja-backend
+    spec:
+      containers:
+      - name: backend
+        image: neja-registry.azurecr.io/backend:latest
+        ports:
+        - containerPort: 4000
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: "500m"
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: neja-backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
