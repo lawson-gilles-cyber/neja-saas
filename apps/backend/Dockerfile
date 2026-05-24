@@ -1,34 +1,21 @@
 FROM node:20-alpine AS builder
-
-RUN apk add --no-cache openssl
-
 WORKDIR /usr/src/app
-
 COPY package*.json ./
 COPY prisma ./prisma/
-
 RUN npm ci
-
-COPY . .
-
-RUN echo "DATABASE_URL=$DATABASE_URL"
+# DATABASE_URL fictive pour que prisma generate ne bloque pas le build
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npx prisma generate
+COPY . .
 RUN npm run build
 
 FROM node:20-alpine
-
-RUN apk add --no-cache openssl
-
 WORKDIR /usr/src/app
-
 COPY package*.json ./
-
-RUN npm ci --omit=dev
-
+RUN npm ci --only=production
 COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/prisma ./prisma
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
-
+COPY --from=builder /usr/src/app/prisma ./prisma
 EXPOSE 4000
-
-CMD ["node", "dist/main.js"]
+# La vraie DATABASE_URL est injectée par Railway au démarrage
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
